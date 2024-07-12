@@ -35,52 +35,56 @@ let posts = [
 let lastId = 3;
 
 // Middleware
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-//Write your code here//
-app.get("/posts", (req, res)=>{
-
+// GET all posts
+app.get("/posts", (req, res) => {
+  console.log(posts);
   res.json(posts);
-})
+});
 
-app.post("/posts", (req,res)=>{
-  const add = {
-    id : posts.length+1,
-    title : req.body.title,
-    content : req.body.content,
-    author : req.body.author,
+// GET a specific post by id
+app.get("/posts/:id", (req, res) => {
+  const post = posts.find((p) => p.id === parseInt(req.params.id));
+  if (!post) return res.status(404).json({ message: "Post not found" });
+  res.json(post);
+});
+
+// POST a new post
+app.post("/posts", (req, res) => {
+  const newId = lastId += 1;
+  const post = {
+    id: newId,
+    title: req.body.title,
+    content: req.body.content,
+    author: req.body.author,
     date: new Date(),
-  }
- const result = posts.push(add);
- res.json(result);
-})
+  };
+  posts.push(post);
+  res.status(201).json(post);
+});
 
+// PATCH a post when you just want to update one parameter
+app.patch("/posts/:id", (req, res) => {
+  const post = posts.find((p) => p.id === parseInt(req.params.id));
+  if (!post) return res.status(404).json({ message: "Post not found" });
 
+  if (req.body.title) post.title = req.body.title;
+  if (req.body.content) post.content = req.body.content;
+  if (req.body.author) post.author = req.body.author;
 
-app.patch("/posts/:id", (req,res)=>{
-  const id =  parseInt(req.params.id);
-  const edit = posts.find((post)=> post.id === id);
-  const reconstruct = {
+  res.json(post);
+});
 
-    title : edit.title||req.body.title,
-    content : edit.content||req.body.content,
-    author : edit.author||req.body.author,
-    date: new Date(),
-  }
-  const index = posts.findIndex((post)=> post.id === id);
-  posts[index] = reconstruct;
-  res.json(reconstruct);
-})
+// DELETE a specific post by providing the post id
+app.delete("/posts/:id", (req, res) => {
+  const index = posts.findIndex((p) => p.id === parseInt(req.params.id));
+  if (index === -1) return res.status(404).json({ message: "Post not found" });
 
-app.delete("/posts/:id" , (req,res)=>{
-  const id = parseInt(req.params.id);
-  const dele = posts.findIndex((post)=> post.id === id);
-  const result = posts.splice(dele,1);
-  console.log(result);
-  res.sendStatus(200);
-})
-
+  posts.splice(index, 1);
+  res.json({ message: "Post deleted" });
+});
 
 app.listen(port, () => {
   console.log(`API is running at http://localhost:${port}`);
